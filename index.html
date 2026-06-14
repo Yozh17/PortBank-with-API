@@ -338,19 +338,19 @@
 <script>
     // ========== НАСТРОЙКИ ==========
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcl53_377dw5QqA3wHledp_YVVekQXdoI6vv-OeLjAg0J7QFUV6sSgsGuRry8J7hOb/exec";
+    // ⚠️ ВСТАВЬТЕ СЮДА ВАШ URL ИЗ APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyoVu-Oy8I9dXMLmgotcPyf9YNKcKfedylWFcn5OWgqMH0xz1-n5m5OdK7TxxlPdP29Q/exec";
     
     let users = [];
     let history = [];
     let isAdmin = false;
     let currentSort = { field: 'balance', order: 'desc' };
     
-    // ========== РАБОТА С GOOGLE SHEETS ==========
+    // ========== ЗАГРУЗКА ==========
     async function loadFromGoogleSheets() {
         try {
             const response = await fetch(SCRIPT_URL);
-            const text = await response.text();
-            const data = JSON.parse(text);
+            const data = await response.json();
             if (data.users && Array.isArray(data.users)) {
                 users = data.users;
                 return true;
@@ -362,7 +362,8 @@
         }
     }
     
-    async function saveToGoogleSheets() {
+    // ========== СОХРАНЕНИЕ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ==========
+    async function saveAllToGoogleSheets() {
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -383,7 +384,7 @@
         if (!user) return;
         user.balance += amount;
         addToHistory(user.name, amount, reason, true);
-        await saveToGoogleSheets();
+        await saveAllToGoogleSheets();
         renderUsers();
     }
     
@@ -396,7 +397,7 @@
         }
         user.balance -= amount;
         addToHistory(user.name, amount, reason, false);
-        await saveToGoogleSheets();
+        await saveAllToGoogleSheets();
         renderUsers();
         return true;
     }
@@ -414,7 +415,7 @@
         const newUser = { id: maxId + 1, name: name.trim(), balance: 0 };
         users.push(newUser);
         addToHistory(name.trim(), 0, "Создание счета", true);
-        await saveToGoogleSheets();
+        await saveAllToGoogleSheets();
         renderUsers();
         return newUser;
     }
@@ -425,7 +426,7 @@
         if (confirm(`Удалить участника ${user.name}? Баланс ${user.balance} дублонов будет потерян.`)) {
             users = users.filter(u => u.id !== userId);
             addToHistory(user.name, user.balance, "Удаление счета", false);
-            await saveToGoogleSheets();
+            await saveAllToGoogleSheets();
             renderUsers();
         }
     }
