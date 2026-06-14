@@ -338,8 +338,7 @@
 <script>
     // ========== НАСТРОЙКИ ==========
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    // ВАШ НОВЫЙ РАБОЧИЙ URL (который показал данные)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcl53_377dw5QqA3wHledp_YVVekQXdoI6vv-OeLjAg0J7QFUV6sSgsGuRry8J7hOb/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZfaOXyZEg-NiUHEImPJ85JnmDudGqK-jCHN3T6qIhCU8QryFzsMF5AL3N0VYKBhF-/exec";
     
     let users = [];
     let history = [];
@@ -516,7 +515,7 @@
             await addDublon(userId, 1, reason || "отзыв");
             const newBalance = users.find(u => u.id === userId).balance;
             const msg = `${user.name}, начислен 1🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-            navigator.clipboard.writeText(msg);
+            await navigator.clipboard.writeText(msg);
             alert('📋 Сообщение скопировано в буфер!');
         }
     };
@@ -528,7 +527,7 @@
             await addDublon(userId, 5, reason || "активность");
             const newBalance = users.find(u => u.id === userId).balance;
             const msg = `${user.name}, начислен 5🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-            navigator.clipboard.writeText(msg);
+            await navigator.clipboard.writeText(msg);
             alert('📋 Сообщение скопировано в буфер!');
         }
     };
@@ -542,7 +541,7 @@
                 await addDublon(userId, parseInt(amount), reason || "начисление");
                 const newBalance = users.find(u => u.id === userId).balance;
                 const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-                navigator.clipboard.writeText(msg);
+                await navigator.clipboard.writeText(msg);
                 alert('📋 Сообщение скопировано в буфер!');
             }
         } else if (amount) alert('Введите корректное число');
