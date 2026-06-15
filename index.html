@@ -193,11 +193,47 @@
             color: #f0f4ff;
             font-size: 1rem;
         }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,215,140,0.3);
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: rgba(25, 35, 60, 0.6);
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #bdd4ff;
+            cursor: pointer;
+            border-radius: 30px 30px 0 0;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: rgba(255, 180, 70, 0.2);
+            color: #ffefc0;
+            border-bottom: 2px solid #ffb347;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         .users-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .users-table tr { border-bottom: 1px solid rgba(255,215,140,0.2); }
+        .users-table tr {
+            border-bottom: 1px solid rgba(255,215,140,0.2);
+        }
         .users-table th {
             padding: 12px 8px;
             text-align: left;
@@ -206,9 +242,16 @@
             cursor: pointer;
             user-select: none;
         }
-        .users-table th:hover { color: #ffb347; }
-        .users-table td { padding: 12px 8px; }
-        .user-name { font-weight: bold; color: #ffefc0; }
+        .users-table th:hover {
+            color: #ffb347;
+        }
+        .users-table td {
+            padding: 12px 8px;
+        }
+        .user-name {
+            font-weight: bold;
+            color: #ffefc0;
+        }
         .user-balance {
             font-size: 1.3rem;
             font-weight: bold;
@@ -231,31 +274,46 @@
             font-size: 0.8rem;
             transition: 0.2s;
         }
-        .admin-btn:hover { background: #ffb347; color: #0a0f2a; }
-        .btn-plus5 { background: #2a5a3a; border-color: #88ffaa; }
-        .btn-custom { background: #5a3a2a; border-color: #ffaa88; }
-        .history-section {
-            margin-top: 25px;
-            background: rgba(10, 20, 40, 0.5);
-            border-radius: 24px;
-            padding: 15px;
+        .admin-btn:hover {
+            background: #ffb347;
+            color: #0a0f2a;
         }
-        .history-title {
-            color: #ffdfaa;
-            margin-bottom: 10px;
-            cursor: pointer;
+        .btn-plus5 {
+            background: #2a5a3a;
+            border-color: #88ffaa;
         }
-        .history-list {
-            max-height: 250px;
-            overflow-y: auto;
+        .btn-custom {
+            background: #5a3a2a;
+            border-color: #ffaa88;
+        }
+        .history-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .history-filters select {
+            background: rgba(15, 25, 45, 0.9);
+            border: 1px solid #ffcf8a;
+            border-radius: 20px;
+            padding: 6px 10px;
+            color: #f0f4ff;
             font-size: 0.8rem;
-            color: #bdd4ff;
-            display: none;
+            min-width: 150px;
         }
-        .history-list.open { display: block; }
-        .history-item {
-            padding: 6px 0;
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .history-table th, .history-table td {
+            padding: 8px 6px;
+            text-align: left;
             border-bottom: 1px solid rgba(255,215,140,0.1);
+        }
+        .history-table th {
+            color: #ffdfaa;
         }
         .copy-btn {
             background: linear-gradient(135deg, #6a5a8a, #4e3e6e);
@@ -275,9 +333,19 @@
             color: #88aaff;
         }
         @media (max-width: 700px) {
-            .users-table td, .users-table th { padding: 8px 4px; }
-            .user-balance { font-size: 1rem; }
-            .admin-buttons { flex-direction: column; gap: 4px; }
+            .users-table td, .users-table th {
+                padding: 8px 4px;
+            }
+            .user-balance {
+                font-size: 1rem;
+            }
+            .admin-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .history-table {
+                font-size: 0.7rem;
+            }
         }
     </style>
 </head>
@@ -306,30 +374,46 @@
         </div>
     </div>
 
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="🔍 Поиск по имени...">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tabUsers">👥 УЧАСТНИКИ</button>
+        <button class="tab-btn" data-tab="tabHistory">📜 ИСТОРИЯ</button>
     </div>
 
-    <div id="loadingMsg" class="loading">⏳ Загрузка данных из таблицы...</div>
+    <div id="tabUsers" class="tab-content active">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск по имени...">
+        </div>
 
-    <div style="overflow-x: auto; display:none;" id="tableContainer">
-        <table class="users-table">
-            <thead>
-                <tr><th id="sortName">👤 Участник</th><th id="sortBalance" style="text-align:center">🪙 Дублоны</th><th id="adminActionsHeader" style="display:none">⚡ Действия</th></tr>
-            </thead>
-            <tbody id="usersList"></tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table class="users-table" id="usersTable">
+                <thead>
+                    <tr><th id="sortName">👤 Участник</th><th id="sortBalance" style="text-align:center">🪙 Дублоны</th><th id="adminActionsHeader" style="display:none">⚡ Действия</th></tr>
+                </thead>
+                <tbody id="usersList"></tbody>
+            </table>
+        </div>
+
+        <div id="addUserBlock" style="display:none;">
+            <button class="tool-btn" id="addUserBtn" style="margin:15px 0;">➕ ДОБАВИТЬ УЧАСТНИКА</button>
+        </div>
+
+        <button class="copy-btn" id="copyForChatBtn">📋 СКОПИРОВАТЬ БАЛАНСЫ ДЛЯ БЕСЕДЫ</button>
     </div>
 
-    <div id="addUserBlock" style="display:none;">
-        <button class="tool-btn" id="addUserBtn" style="margin:15px 0;">➕ ДОБАВИТЬ УЧАСТНИКА</button>
-    </div>
-
-    <button class="copy-btn" id="copyForChatBtn" style="display:none;">📋 СКОПИРОВАТЬ БАЛАНСЫ ДЛЯ БЕСЕДЫ</button>
-
-    <div class="history-section" style="display:none;" id="historySection">
-        <div class="history-title" id="historyToggle">📜 ИСТОРИЯ ОПЕРАЦИЙ ▼</div>
-        <div class="history-list" id="historyList"></div>
+    <div id="tabHistory" class="tab-content">
+        <div class="history-filters">
+            <select id="historyFilterUser">
+                <option value="">Все участники</option>
+            </select>
+        </div>
+        <div style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
+            <table class="history-table">
+                <thead>
+                    <tr><th>Дата</th><th>Участник</th><th>Операция</th><th>Сумма</th><th>Причина</th></tr>
+                </thead>
+                <tbody id="historyList"></tbody>
+            </table>
+        </div>
     </div>
 
     <footer>vk.com/fickbuhta — Портовый банк</footer>
@@ -338,11 +422,11 @@
 <script>
     // ========== НАСТРОЙКИ ==========
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    // ⚠️ ВСТАВЬТЕ СЮДА ВАШ URL ИЗ APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIBi3sysgdFR7a-6vofTAy1kLnSub2FJU_CfIwnNrx6wMmw7hV-edIdDPFsdyG3WftUw/exec";
+    // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8xQc4OCimWCsd8Sm1YCkzBlxHqv1IVrkn_H8weBG8bcX0rOz1o1Vp9ZUpIYiYk8yloA/exec";
     
     let users = [];
-    let history = [];
+    let fullHistory = [];
     let isAdmin = false;
     let currentSort = { field: 'balance', order: 'desc' };
     
@@ -353,17 +437,20 @@
             const data = await response.json();
             if (data.users && Array.isArray(data.users)) {
                 users = data.users;
-                return true;
             }
-            return false;
+            if (data.history && Array.isArray(data.history)) {
+                fullHistory = data.history;
+                updateHistoryFilter();
+                renderHistory();
+            }
+            return true;
         } catch(e) {
             console.error('Ошибка загрузки:', e);
             return false;
         }
     }
     
-    // ========== СОХРАНЕНИЕ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ==========
-    async function saveAllToGoogleSheets() {
+    async function saveToGoogleSheets() {
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -378,13 +465,32 @@
         }
     }
     
+    async function addHistoryEntry(userName, operation, amount, reason) {
+        const historyEntry = {
+            userName: userName,
+            operation: operation,
+            amount: amount,
+            reason: reason
+        };
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ historyEntry: historyEntry })
+            });
+        } catch(e) {
+            console.error('Ошибка записи истории:', e);
+        }
+    }
+    
     // ========== ОПЕРАЦИИ ==========
     async function addDublon(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
         user.balance += amount;
-        addToHistory(user.name, amount, reason, true);
-        await saveAllToGoogleSheets();
+        await addHistoryEntry(user.name, "Начисление", amount, reason);
+        await saveToGoogleSheets();
         renderUsers();
     }
     
@@ -396,8 +502,8 @@
             return false;
         }
         user.balance -= amount;
-        addToHistory(user.name, amount, reason, false);
-        await saveAllToGoogleSheets();
+        await addHistoryEntry(user.name, "Списание", amount, reason);
+        await saveToGoogleSheets();
         renderUsers();
         return true;
     }
@@ -414,8 +520,8 @@
         const maxId = users.length > 0 ? Math.max(...users.map(u => u.id)) : -1;
         const newUser = { id: maxId + 1, name: name.trim(), balance: 0 };
         users.push(newUser);
-        addToHistory(name.trim(), 0, "Создание счета", true);
-        await saveAllToGoogleSheets();
+        await addHistoryEntry(name.trim(), "Создание счета", 0, "Новый участник");
+        await saveToGoogleSheets();
         renderUsers();
         return newUser;
     }
@@ -424,26 +530,11 @@
         const user = users.find(u => u.id === userId);
         if (!user) return;
         if (confirm(`Удалить участника ${user.name}? Баланс ${user.balance} дублонов будет потерян.`)) {
+            await addHistoryEntry(user.name, "Удаление счета", user.balance, "Участник удалён");
             users = users.filter(u => u.id !== userId);
-            addToHistory(user.name, user.balance, "Удаление счета", false);
-            await saveAllToGoogleSheets();
+            await saveToGoogleSheets();
             renderUsers();
         }
-    }
-    
-    // ========== ИСТОРИЯ ==========
-    function addToHistory(userName, amount, reason, isAdd) {
-        const now = new Date();
-        const timeStr = `${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        history.unshift({
-            userName: userName,
-            amount: amount,
-            reason: reason,
-            isAdd: isAdd,
-            time: timeStr
-        });
-        if (history.length > 200) history.pop();
-        renderHistory();
     }
     
     // ========== ОТОБРАЖЕНИЕ ==========
@@ -494,17 +585,47 @@
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
     
+    function updateHistoryFilter() {
+        const select = document.getElementById('historyFilterUser');
+        if (!select) return;
+        const currentValue = select.value;
+        const uniqueNames = [...new Set(fullHistory.map(h => h.userName))];
+        select.innerHTML = '<option value="">Все участники</option>';
+        uniqueNames.forEach(name => {
+            select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+        });
+        if (currentValue) select.value = currentValue;
+    }
+    
     function renderHistory() {
-        const historyDiv = document.getElementById('historyList');
-        if (!historyDiv) return;
-        if (history.length === 0) {
-            historyDiv.innerHTML = '<div class="history-item">История пуста</div>';
+        const tbody = document.getElementById('historyList');
+        if (!tbody) return;
+        
+        const filterUser = document.getElementById('historyFilterUser')?.value;
+        let filtered = [...fullHistory];
+        if (filterUser && filterUser !== '') {
+            filtered = filtered.filter(item => item.userName === filterUser);
+        }
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td></tr>';
             return;
         }
-        historyDiv.innerHTML = history.slice(0, 100).map(item => {
-            const sign = item.isAdd ? '➕ +' : '➖ -';
-            const color = item.isAdd ? '#aaffaa' : '#ffaaaa';
-            return `<div class="history-item" style="color:${color}">${item.time} — ${sign}${item.amount} 🪙 ${escapeHtml(item.userName)} <span style="color:#88aaff; font-size:0.7rem;"> (${escapeHtml(item.reason || 'без причины')})</span></div>`;
+        
+        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        tbody.innerHTML = filtered.slice(0, 200).map(item => {
+            const date = new Date(item.date);
+            const dateStr = `${date.getDate().toString().padStart(2,'0')}.${(date.getMonth()+1).toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+            const sign = item.operation === "Начисление" ? "+" : (item.operation === "Списание" ? "-" : "");
+            const amountStr = item.amount ? `${sign}${item.amount} 🪙` : "";
+            return `<tr>
+                        <td>${dateStr}</td>
+                        <td>${escapeHtml(item.userName)}</td>
+                        <td>${escapeHtml(item.operation)}</td>
+                        <td>${amountStr}</td>
+                        <td>${escapeHtml(item.reason || '—')}</td>
+                    </tr>`;
         }).join('');
     }
     
@@ -577,15 +698,28 @@
     async function initApp() {
         document.getElementById('loadingMsg').style.display = 'block';
         const success = await loadFromGoogleSheets();
-        if (success && users.length > 0) {
-            document.getElementById('loadingMsg').style.display = 'none';
+        document.getElementById('loadingMsg').style.display = 'none';
+        if (success) {
             document.getElementById('tableContainer').style.display = 'block';
             document.getElementById('copyForChatBtn').style.display = 'block';
-            document.getElementById('historySection').style.display = 'block';
             renderUsers();
         } else {
             document.getElementById('loadingMsg').innerHTML = '❌ Ошибка загрузки данных. Проверьте таблицу.';
         }
+    }
+    
+    // ========== ВКЛАДКИ ==========
+    function initTabs() {
+        const tabsBtns = document.querySelectorAll('.tab-btn');
+        tabsBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                tabsBtns.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
     }
     
     // ========== АДМИН-ПАНЕЛЬ ==========
@@ -623,9 +757,10 @@
     
     // ========== ЗАПУСК ==========
     initApp();
+    initTabs();
+    
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
-    document.getElementById('historyToggle').onclick = () => document.getElementById('historyList').classList.toggle('open');
     document.getElementById('sortName').onclick = () => {
         if (currentSort.field === 'name') currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
         else { currentSort.field = 'name'; currentSort.order = 'asc'; }
@@ -640,6 +775,8 @@
         const name = prompt("Введите имя нового участника:");
         if (name?.trim()) await addNewUser(name.trim());
     };
+    document.getElementById('historyFilterUser').addEventListener('change', () => renderHistory());
+    
     showAdminLogin();
     
     function createStars() {
