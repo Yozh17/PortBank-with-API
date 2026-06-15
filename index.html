@@ -333,19 +333,10 @@
             color: #88aaff;
         }
         @media (max-width: 700px) {
-            .users-table td, .users-table th {
-                padding: 8px 4px;
-            }
-            .user-balance {
-                font-size: 1rem;
-            }
-            .admin-buttons {
-                flex-direction: column;
-                gap: 4px;
-            }
-            .history-table {
-                font-size: 0.7rem;
-            }
+            .users-table td, .users-table th { padding: 8px 4px; }
+            .user-balance { font-size: 1rem; }
+            .admin-buttons { flex-direction: column; gap: 4px; }
+            .history-table { font-size: 0.7rem; }
         }
     </style>
 </head>
@@ -370,7 +361,10 @@
     <div id="adminPanel" class="admin-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <span>🔧 Режим администратора</span>
-            <button class="admin-btn" id="logoutBtn" style="background:#8a4a4a;">🚪 Выйти</button>
+            <div>
+                <button class="admin-btn" id="backupBtn" style="background:#4a6a8a;">💾 Скачать бэкап</button>
+                <button class="admin-btn" id="logoutBtn" style="background:#8a4a4a;">🚪 Выйти</button>
+            </div>
         </div>
     </div>
 
@@ -384,7 +378,7 @@
             <input type="text" id="searchInput" placeholder="🔍 Поиск по имени...">
         </div>
 
-        <div style="overflow-x: auto;">
+        <div id="usersTableContainer" style="overflow-x: auto;">
             <table class="users-table" id="usersTable">
                 <thead>
                     <tr><th id="sortName">👤 Участник</th><th id="sortBalance" style="text-align:center">🪙 Дублоны</th><th id="adminActionsHeader" style="display:none">⚡ Действия</th></tr>
@@ -411,7 +405,7 @@
                 <thead>
                     <tr><th>Дата</th><th>Участник</th><th>Операция</th><th>Сумма</th><th>Причина</th></tr>
                 </thead>
-                <tbody id="historyList"></tbody>
+                <tbody id="historyListBody"></tbody>
             </table>
         </div>
     </div>
@@ -420,37 +414,35 @@
 </div>
 
 <script>
-    // ========== НАСТРОЙКИ ==========
+    // ==================== НАСТРОЙКИ (ОБЯЗАТЕЛЬНО ВСТАВЬТЕ ВАШ НОВЫЙ URL!) ====================
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8xQc4OCimWCsd8Sm1YCkzBlxHqv1IVrkn_H8weBG8bcX0rOz1o1Vp9ZUpIYiYk8yloA/exec";
-    
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynlx0cBGDC2nIqDTOIetSCLd-eOS3bp5VUi8j7VGpcwXztFBA91QMCJHa-4pLaagwKOQ/exec";
+    // =============================================================================
+
     let users = [];
     let fullHistory = [];
     let isAdmin = false;
     let currentSort = { field: 'balance', order: 'desc' };
     
     // ========== ЗАГРУЗКА ==========
-    async function loadFromGoogleSheets() {
+    async function loadData() {
         try {
             const response = await fetch(SCRIPT_URL);
             const data = await response.json();
-            if (data.users && Array.isArray(data.users)) {
-                users = data.users;
-            }
-            if (data.history && Array.isArray(data.history)) {
-                fullHistory = data.history;
-                updateHistoryFilter();
-                renderHistory();
-            }
+            if (data.users && Array.isArray(data.users)) users = data.users;
+            if (data.history && Array.isArray(data.history)) fullHistory = data.history;
+            updateHistoryFilter();
+            renderUsers();
+            renderHistory();
             return true;
         } catch(e) {
             console.error('Ошибка загрузки:', e);
+            alert('❌ Ошибка загрузки данных. Проверьте таблицу и URL скрипта.');
             return false;
         }
     }
     
-    async function saveToGoogleSheets() {
+    async function saveUsers() {
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -458,20 +450,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ users: users })
             });
-            return true;
-        } catch(e) {
-            console.error('Ошибка сохранения:', e);
-            return false;
-        }
+        } catch(e) { console.error('Ошибка сохранения:', e); }
     }
     
     async function addHistoryEntry(userName, operation, amount, reason) {
-        const historyEntry = {
-            userName: userName,
-            operation: operation,
-            amount: amount,
-            reason: reason
-        };
+        const historyEntry = { userName, operation, amount, reason };
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -479,9 +462,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ historyEntry: historyEntry })
             });
-        } catch(e) {
-            console.error('Ошибка записи истории:', e);
-        }
+        } catch(e) { console.error('Ошибка записи истории:', e); }
     }
     
     // ========== ОПЕРАЦИИ ==========
@@ -490,8 +471,12 @@
         if (!user) return;
         user.balance += amount;
         await addHistoryEntry(user.name, "Начисление", amount, reason);
-        await saveToGoogleSheets();
+        await saveUsers();
         renderUsers();
+        // Сообщение в буфер
+        const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
+        await navigator.clipboard.writeText(msg);
+        alert(`✅ Готово! Сообщение скопировано в буфер обмена.`);
     }
     
     async function subtractDublons(userId, amount, reason) {
@@ -503,50 +488,39 @@
         }
         user.balance -= amount;
         await addHistoryEntry(user.name, "Списание", amount, reason);
-        await saveToGoogleSheets();
+        await saveUsers();
         renderUsers();
         return true;
     }
     
     async function addNewUser(name) {
-        if (!name || name.trim() === '') {
-            alert('Введите имя участника');
-            return null;
-        }
+        if (!name?.trim()) { alert('Введите имя'); return; }
         if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) {
             alert('Такой участник уже есть!');
-            return null;
+            return;
         }
         const maxId = users.length > 0 ? Math.max(...users.map(u => u.id)) : -1;
         const newUser = { id: maxId + 1, name: name.trim(), balance: 0 };
         users.push(newUser);
         await addHistoryEntry(name.trim(), "Создание счета", 0, "Новый участник");
-        await saveToGoogleSheets();
+        await saveUsers();
         renderUsers();
-        return newUser;
     }
     
     async function deleteUser(userId) {
         const user = users.find(u => u.id === userId);
-        if (!user) return;
-        if (confirm(`Удалить участника ${user.name}? Баланс ${user.balance} дублонов будет потерян.`)) {
-            await addHistoryEntry(user.name, "Удаление счета", user.balance, "Участник удалён");
-            users = users.filter(u => u.id !== userId);
-            await saveToGoogleSheets();
-            renderUsers();
-        }
+        if (!user || !confirm(`Удалить ${user.name}?`)) return;
+        await addHistoryEntry(user.name, "Удаление счета", user.balance, "Участник удалён");
+        users = users.filter(u => u.id !== userId);
+        await saveUsers();
+        renderUsers();
     }
     
     // ========== ОТОБРАЖЕНИЕ ==========
     function sortUsers() {
         users.sort((a, b) => {
-            if (currentSort.field === 'name') {
-                const comp = a.name.localeCompare(b.name);
-                return currentSort.order === 'asc' ? comp : -comp;
-            } else {
-                const comp = a.balance - b.balance;
-                return currentSort.order === 'asc' ? comp : -comp;
-            }
+            if (currentSort.field === 'name') return currentSort.order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+            else return currentSort.order === 'asc' ? a.balance - b.balance : b.balance - a.balance;
         });
     }
     
@@ -555,32 +529,26 @@
         const tbody = document.getElementById('usersList');
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const filtered = users.filter(u => u.name.toLowerCase().includes(searchTerm));
-        
         tbody.innerHTML = '';
-        filtered.forEach(user => {
+        for (const user of filtered) {
             const row = tbody.insertRow();
             row.insertCell(0).innerHTML = `<span class="user-name">${escapeHtml(user.name)}</span>`;
             const balanceCell = row.insertCell(1);
             balanceCell.className = 'user-balance';
             balanceCell.innerHTML = `${user.balance}`;
-            balanceCell.style.textAlign = 'center';
-            
             if (isAdmin) {
                 const cellActions = row.insertCell(2);
                 cellActions.className = 'admin-buttons';
                 cellActions.innerHTML = `
-                    <button class="admin-btn" onclick="promptAdd(${user.id})">+1 🪙</button>
-                    <button class="admin-btn btn-plus5" onclick="promptAdd5(${user.id})">+5 🪙</button>
-                    <button class="admin-btn btn-custom" onclick="promptAddCustom(${user.id})">+? 🪙</button>
-                    <button class="admin-btn" onclick="promptSubtract(${user.id})">- 🪙</button>
+                    <button class="admin-btn" onclick="window.promptAdd(${user.id})">+1 🪙</button>
+                    <button class="admin-btn btn-plus5" onclick="window.promptAdd5(${user.id})">+5 🪙</button>
+                    <button class="admin-btn btn-custom" onclick="window.promptAddCustom(${user.id})">+? 🪙</button>
+                    <button class="admin-btn" onclick="window.promptSubtract(${user.id})">- 🪙</button>
                     <button class="admin-btn" onclick="deleteUser(${user.id})" style="border-color:#ff8888;">🗑</button>
                 `;
             }
-        });
-        
-        const header = document.getElementById('adminActionsHeader');
-        if (header) header.style.display = isAdmin ? 'table-cell' : 'none';
-        
+        }
+        document.getElementById('adminActionsHeader').style.display = isAdmin ? 'table-cell' : 'none';
         document.getElementById('sortName').innerHTML = currentSort.field === 'name' ? (currentSort.order === 'asc' ? '👤 Участник ▲' : '👤 Участник ▼') : '👤 Участник';
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
@@ -588,208 +556,120 @@
     function updateHistoryFilter() {
         const select = document.getElementById('historyFilterUser');
         if (!select) return;
-        const currentValue = select.value;
         const uniqueNames = [...new Set(fullHistory.map(h => h.userName))];
         select.innerHTML = '<option value="">Все участники</option>';
-        uniqueNames.forEach(name => {
-            select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
-        });
-        if (currentValue) select.value = currentValue;
+        uniqueNames.forEach(name => select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`);
     }
     
     function renderHistory() {
-        const tbody = document.getElementById('historyList');
+        const tbody = document.getElementById('historyListBody');
         if (!tbody) return;
-        
         const filterUser = document.getElementById('historyFilterUser')?.value;
         let filtered = [...fullHistory];
-        if (filterUser && filterUser !== '') {
-            filtered = filtered.filter(item => item.userName === filterUser);
-        }
-        
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td></tr>';
-            return;
-        }
+        if (filterUser) filtered = filtered.filter(item => item.userName === filterUser);
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td></tr>'; return; }
         
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
         tbody.innerHTML = filtered.slice(0, 200).map(item => {
             const date = new Date(item.date);
             const dateStr = `${date.getDate().toString().padStart(2,'0')}.${(date.getMonth()+1).toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            const sign = item.operation === "Начисление" ? "+" : (item.operation === "Списание" ? "-" : "");
-            const amountStr = item.amount ? `${sign}${item.amount} 🪙` : "";
-            return `<tr>
-                        <td>${dateStr}</td>
-                        <td>${escapeHtml(item.userName)}</td>
-                        <td>${escapeHtml(item.operation)}</td>
-                        <td>${amountStr}</td>
-                        <td>${escapeHtml(item.reason || '—')}</td>
-                    </tr>`;
+            const amountStr = item.amount ? (item.operation === "Начисление" ? `+${item.amount} 🪙` : (item.operation === "Списание" ? `-${item.amount} 🪙` : `${item.amount} 🪙`)) : "";
+            return `<tr><td>${dateStr}</td><td>${escapeHtml(item.userName)}</td><td>${escapeHtml(item.operation)}</td><td>${amountStr}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`;
         }).join('');
+    }
+    
+    // ========== БЭКАП ==========
+    function downloadBackup() {
+        const backup = { users: users, history: fullHistory, exportDate: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+        const link = document.createElement('a');
+        link.download = `portbank_backup_${new Date().toISOString().slice(0,19)}.json`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+        alert('✅ Бэкап сохранён!');
     }
     
     // ========== ДИАЛОГИ ==========
     window.promptAdd = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить дублон ${user?.name}?`, "отзыв");
-        if (reason !== null) {
-            await addDublon(userId, 1, reason || "отзыв");
-            const newBalance = users.find(u => u.id === userId).balance;
-            const msg = `${user.name}, начислен 1🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-            await navigator.clipboard.writeText(msg);
-            alert('📋 Сообщение скопировано в буфер!');
-        }
+        if (reason) await addDublon(userId, 1, reason);
     };
-    
     window.promptAdd5 = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить 5 дублонов ${user?.name}?`, "Активный участник месяца");
-        if (reason !== null) {
-            await addDublon(userId, 5, reason || "активность");
-            const newBalance = users.find(u => u.id === userId).balance;
-            const msg = `${user.name}, начислен 5🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-            await navigator.clipboard.writeText(msg);
-            alert('📋 Сообщение скопировано в буфер!');
-        }
+        if (reason) await addDublon(userId, 5, reason);
     };
-    
     window.promptAddCustom = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов начислить ${user?.name}?`, "1");
         if (amount && !isNaN(parseInt(amount)) && parseInt(amount) > 0) {
-            const reason = prompt(`Причина начисления:`, "отзыв/активность");
-            if (reason !== null) {
-                await addDublon(userId, parseInt(amount), reason || "начисление");
-                const newBalance = users.find(u => u.id === userId).balance;
-                const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${newBalance}🪙`;
-                await navigator.clipboard.writeText(msg);
-                alert('📋 Сообщение скопировано в буфер!');
-            }
-        } else if (amount) alert('Введите корректное число');
+            const reason = prompt(`Причина:`, "отзыв/активность");
+            if (reason) await addDublon(userId, parseInt(amount), reason);
+        }
     };
-    
     window.promptSubtract = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов списать у ${user?.name}? (Доступно: ${user?.balance})`, "1");
         if (amount && !isNaN(parseInt(amount)) && parseInt(amount) > 0) {
-            const reason = prompt(`Причина списания (PR-пост, обложка...)`, "PR-пост");
-            if (reason !== null) await subtractDublons(userId, parseInt(amount), reason);
-        } else if (amount) alert('Введите корректное число');
+            const reason = prompt(`Причина списания:`, "PR-пост");
+            if (reason) await subtractDublons(userId, parseInt(amount), reason);
+        }
     };
-    
-    window.deleteUser = deleteUser;
     
     function copyBalancesToChat() {
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
-        [...users].sort((a,b) => b.balance - a.balance).forEach(user => {
-            text += `${user.name} — ${user.balance} 🪙\n`;
-        });
+        [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!'));
     }
     
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-    }
-    
-    // ========== ЗАГРУЗКА ==========
-    async function initApp() {
-        document.getElementById('loadingMsg').style.display = 'block';
-        const success = await loadFromGoogleSheets();
-        document.getElementById('loadingMsg').style.display = 'none';
-        if (success) {
-            document.getElementById('tableContainer').style.display = 'block';
-            document.getElementById('copyForChatBtn').style.display = 'block';
-            renderUsers();
-        } else {
-            document.getElementById('loadingMsg').innerHTML = '❌ Ошибка загрузки данных. Проверьте таблицу.';
-        }
-    }
-    
-    // ========== ВКЛАДКИ ==========
-    function initTabs() {
-        const tabsBtns = document.querySelectorAll('.tab-btn');
-        tabsBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                tabsBtns.forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-            });
-        });
-    }
+    function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
     
     // ========== АДМИН-ПАНЕЛЬ ==========
     function showAdminLogin() {
         const modal = document.createElement('div');
         modal.className = 'login-modal';
-        modal.innerHTML = `
-            <div class="login-box">
-                <h3>⚓ ПОРТОВЫЙ БАНК ⚓</h3>
-                <p style="color:#bdd4ff;">Введите пароль для управления</p>
-                <input type="password" id="adminPasswordInput" placeholder="Пароль">
-                <button class="login-btn" id="submitAdminPassword">Войти как админ</button>
-                <button class="skip-btn" id="skipAdminLogin">Просмотр без пароля</button>
-                <div id="adminLoginError" class="error-msg"></div>
-            </div>
-        `;
+        modal.innerHTML = `<div class="login-box"><h3>⚓ ПОРТОВЫЙ БАНК ⚓</h3><p style="color:#bdd4ff;">Введите пароль для управления</p><input type="password" id="adminPasswordInput" placeholder="Пароль"><button class="login-btn" id="submitAdminPassword">Войти как админ</button><button class="skip-btn" id="skipAdminLogin">Просмотр без пароля</button><div id="adminLoginError" class="error-msg"></div></div>`;
         document.body.appendChild(modal);
-        
         document.getElementById('submitAdminPassword').onclick = () => {
-            const pwd = document.getElementById('adminPasswordInput').value;
-            if (pwd === ADMIN_PASSWORD) {
+            if (document.getElementById('adminPasswordInput').value === ADMIN_PASSWORD) {
                 isAdmin = true;
                 modal.remove();
                 document.getElementById('adminPanel').classList.add('visible');
                 document.getElementById('addUserBlock').style.display = 'block';
+                document.getElementById('backupBtn').onclick = downloadBackup;
                 document.getElementById('logoutBtn').onclick = () => { isAdmin = false; location.reload(); };
                 renderUsers();
-            } else {
-                document.getElementById('adminLoginError').innerText = 'Неверный пароль';
-            }
+            } else document.getElementById('adminLoginError').innerText = 'Неверный пароль';
         };
         document.getElementById('skipAdminLogin').onclick = () => { modal.remove(); renderUsers(); };
         document.getElementById('adminPasswordInput').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('submitAdminPassword').click(); };
     }
     
-    // ========== ЗАПУСК ==========
-    initApp();
-    initTabs();
-    
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
-    document.getElementById('sortName').onclick = () => {
-        if (currentSort.field === 'name') currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
-        else { currentSort.field = 'name'; currentSort.order = 'asc'; }
-        renderUsers();
-    };
-    document.getElementById('sortBalance').onclick = () => {
-        if (currentSort.field === 'balance') currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
-        else { currentSort.field = 'balance'; currentSort.order = 'desc'; }
-        renderUsers();
-    };
-    document.getElementById('addUserBtn').onclick = async () => {
-        const name = prompt("Введите имя нового участника:");
-        if (name?.trim()) await addNewUser(name.trim());
-    };
+    document.getElementById('sortName').onclick = () => { currentSort.field = 'name'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
+    document.getElementById('sortBalance').onclick = () => { currentSort.field = 'balance'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
+    document.getElementById('addUserBtn').onclick = async () => { const name = prompt("Имя нового участника:"); if (name) await addNewUser(name); };
     document.getElementById('historyFilterUser').addEventListener('change', () => renderHistory());
     
-    showAdminLogin();
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+        });
+    });
     
-    function createStars() {
-        for (let i = 0; i < 150; i++) {
-            let star = document.createElement('div');
-            star.classList.add('star');
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 6 + 's';
-            star.style.animationDuration = Math.random() * 4 + 2 + 's';
-            document.body.appendChild(star);
-        }
-    }
+    window.deleteUser = deleteUser;
+    showAdminLogin();
+    loadData();
+    
+    function createStars() { for (let i = 0; i < 150; i++) { let star = document.createElement('div'); star.classList.add('star'); star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; star.style.animationDelay = Math.random() * 6 + 's'; star.style.animationDuration = Math.random() * 4 + 2 + 's'; document.body.appendChild(star); } }
     createStars();
 </script>
 </body>
