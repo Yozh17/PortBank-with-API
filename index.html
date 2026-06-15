@@ -414,10 +414,10 @@
 </div>
 
 <script>
-    // ==================== НАСТРОЙКИ (ОБЯЗАТЕЛЬНО ВСТАВЬТЕ ВАШ НОВЫЙ URL!) ====================
+    // ==================== НАСТРОЙКИ (ВСТАВЬТЕ ВАШ URL) ====================
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynlx0cBGDC2nIqDTOIetSCLd-eOS3bp5VUi8j7VGpcwXztFBA91QMCJHa-4pLaagwKOQ/exec";
-    // =============================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynlx0cBGDC2nIqDTOIetSCLd-eOS3bp5VUi8j7VGpcwXztFBA91QMCJHa-4pLaagwKOQ/exec";  // ← СЮДА ВСТАВЬТЕ URL ИЗ APPS SCRIPT
+    // ====================================================================
 
     let users = [];
     let fullHistory = [];
@@ -473,10 +473,14 @@
         await addHistoryEntry(user.name, "Начисление", amount, reason);
         await saveUsers();
         renderUsers();
-        // Сообщение в буфер
+        // Копируем сообщение в буфер
         const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
-        await navigator.clipboard.writeText(msg);
-        alert(`✅ Готово! Сообщение скопировано в буфер обмена.`);
+        try {
+            await navigator.clipboard.writeText(msg);
+            alert(`✅ Начислено! Сообщение скопировано в буфер.`);
+        } catch(e) {
+            alert(`✅ Начислено! Сообщение: ${msg}`);
+        }
     }
     
     async function subtractDublons(userId, amount, reason) {
@@ -548,7 +552,8 @@
                 `;
             }
         }
-        document.getElementById('adminActionsHeader').style.display = isAdmin ? 'table-cell' : 'none';
+        const header = document.getElementById('adminActionsHeader');
+        if (header) header.style.display = isAdmin ? 'table-cell' : 'none';
         document.getElementById('sortName').innerHTML = currentSort.field === 'name' ? (currentSort.order === 'asc' ? '👤 Участник ▲' : '👤 Участник ▼') : '👤 Участник';
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
@@ -566,15 +571,29 @@
         if (!tbody) return;
         const filterUser = document.getElementById('historyFilterUser')?.value;
         let filtered = [...fullHistory];
-        if (filterUser) filtered = filtered.filter(item => item.userName === filterUser);
-        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td></tr>'; return; }
+        if (filterUser && filterUser !== '') {
+            filtered = filtered.filter(item => item.userName === filterUser);
+        }
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td><tr>';
+            return;
+        }
         
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = filtered.slice(0, 200).map(item => {
             const date = new Date(item.date);
             const dateStr = `${date.getDate().toString().padStart(2,'0')}.${(date.getMonth()+1).toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            const amountStr = item.amount ? (item.operation === "Начисление" ? `+${item.amount} 🪙` : (item.operation === "Списание" ? `-${item.amount} 🪙` : `${item.amount} 🪙`)) : "";
-            return `<tr><td>${dateStr}</td><td>${escapeHtml(item.userName)}</td><td>${escapeHtml(item.operation)}</td><td>${amountStr}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`;
+            let amountStr = '';
+            if (item.operation === "Начисление") amountStr = `+${item.amount} 🪙`;
+            else if (item.operation === "Списание") amountStr = `-${item.amount} 🪙`;
+            else amountStr = `${item.amount} 🪙`;
+            return `<tr>
+                        <td>${dateStr}</td>
+                        <td>${escapeHtml(item.userName)}</td>
+                        <td>${escapeHtml(item.operation)}</td>
+                        <td>${amountStr}</td>
+                        <td>${escapeHtml(item.reason || '—')}</td>
+                    </tr>`;
         }).join('');
     }
     
@@ -622,7 +641,7 @@
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
         [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
-        navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!'));
+        navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
     
     function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
