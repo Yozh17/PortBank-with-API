@@ -9,9 +9,8 @@
         body {
             min-height: 100vh;
             background: linear-gradient(135deg, #0a0f2a 0%, #0b1a3a 30%, #0a1a3a 70%, #0b1030 100%);
-            font-family: 'Georgia', 'Times New Roman', 'Segoe UI', serif;
+            font-family: 'Georgia', 'Times New Roman', serif;
             padding: 20px;
-            position: relative;
             color: #eef5ff;
             overflow-x: hidden;
         }
@@ -26,51 +25,13 @@
         }
         .star::before {
             content: "✦";
-            font-size: clamp(8px, 1.5vw, 14px);
+            font-size: clamp(6px, 1.2vw, 12px);
             display: block;
-            text-shadow: 0 0 4px white, 0 0 8px rgba(255,255,200,0.8);
+            text-shadow: 0 0 2px white, 0 0 6px rgba(255,255,200,0.6);
         }
         @keyframes starTwinkle {
-            0% { opacity: 0.1; text-shadow: 0 0 1px white; transform: scale(0.8);}
-            100% { opacity: 1; text-shadow: 0 0 8px white, 0 0 12px #ffddaa; transform: scale(1.2);}
-        }
-        .milky-way {
-            position: fixed;
-            top: 0;
-            left: -20%;
-            width: 140%;
-            height: 100%;
-            background: radial-gradient(ellipse at 30% 40%, rgba(180, 200, 255, 0.08) 0%, rgba(130, 150, 210, 0.03) 40%, transparent 70%);
-            transform: rotate(25deg);
-            pointer-events: none;
-            z-index: 0;
-            filter: blur(40px);
-        }
-        .lantern {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 70px;
-            height: 100px;
-            z-index: 10;
-            filter: drop-shadow(0 0 8px #ffaa33);
-            transition: 0.3s;
-        }
-        .lantern-glow {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,200,100,0.15), transparent 70%);
-            pointer-events: none;
-            z-index: 9;
-            animation: flicker 2s infinite alternate;
-        }
-        @keyframes flicker {
-            0% { opacity: 0.4; transform: scale(0.95);}
-            100% { opacity: 1; transform: scale(1.05);}
+            0% { opacity: 0.2; }
+            100% { opacity: 1; }
         }
         .container {
             max-width: 1100px;
@@ -78,7 +39,7 @@
             position: relative;
             z-index: 2;
             background: rgba(8, 18, 35, 0.85);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(4px);
             border-radius: 48px;
             padding: 25px 20px 35px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,220,150,0.2);
@@ -127,10 +88,7 @@
             text-align: center;
             max-width: 350px;
         }
-        .login-box h3 {
-            color: #ffdfaa;
-            margin-bottom: 20px;
-        }
+        .login-box h3 { color: #ffdfaa; margin-bottom: 20px; }
         .login-box input {
             width: 100%;
             padding: 12px;
@@ -159,11 +117,7 @@
             cursor: pointer;
             margin-top: 10px;
         }
-        .error-msg {
-            color: #ff8888;
-            margin-top: 10px;
-            font-size: 0.8rem;
-        }
+        .error-msg { color: #ff8888; margin-top: 10px; font-size: 0.8rem; }
         .admin-panel {
             background: rgba(15, 25, 45, 0.6);
             border-radius: 30px;
@@ -216,24 +170,11 @@
             color: #ffefc0;
             border-bottom: 2px solid #ffb347;
         }
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .users-table tr {
-            border-bottom: 1px solid rgba(255,215,140,0.2);
-        }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .users-table { width: 100%; border-collapse: collapse; }
+        .users-table tr { border-bottom: 1px solid rgba(255,215,140,0.2); }
         .users-table th {
             padding: 12px 8px;
             text-align: left;
@@ -242,22 +183,10 @@
             cursor: pointer;
             user-select: none;
         }
-        .users-table th:hover {
-            color: #ffb347;
-        }
-        .users-table td {
-            padding: 12px 8px;
-        }
-        .user-name {
-            font-weight: bold;
-            color: #ffefc0;
-        }
-        .user-balance {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #ffd966;
-            text-align: center;
-        }
+        .users-table th:hover { color: #ffb347; }
+        .users-table td { padding: 12px 8px; }
+        .user-name { font-weight: bold; color: #ffefc0; }
+        .user-balance { font-size: 1.3rem; font-weight: bold; color: #ffd966; text-align: center; }
         .admin-buttons {
             display: flex;
             gap: 8px;
@@ -274,18 +203,9 @@
             font-size: 0.8rem;
             transition: 0.2s;
         }
-        .admin-btn:hover {
-            background: #ffb347;
-            color: #0a0f2a;
-        }
-        .btn-plus5 {
-            background: #2a5a3a;
-            border-color: #88ffaa;
-        }
-        .btn-custom {
-            background: #5a3a2a;
-            border-color: #ffaa88;
-        }
+        .admin-btn:hover { background: #ffb347; color: #0a0f2a; }
+        .btn-plus5 { background: #2a5a3a; border-color: #88ffaa; }
+        .btn-custom { background: #5a3a2a; border-color: #ffaa88; }
         .history-filters {
             display: flex;
             gap: 10px;
@@ -312,9 +232,7 @@
             text-align: left;
             border-bottom: 1px solid rgba(255,215,140,0.1);
         }
-        .history-table th {
-            color: #ffdfaa;
-        }
+        .history-table th { color: #ffdfaa; }
         .copy-btn {
             background: linear-gradient(135deg, #6a5a8a, #4e3e6e);
             border: none;
@@ -341,23 +259,9 @@
     </style>
 </head>
 <body>
-
-<div class="milky-way"></div>
-<div class="lantern-glow"></div>
-<svg class="lantern" viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="25" y="10" width="10" height="15" fill="#8B6914"/>
-    <rect x="15" y="25" width="30" height="40" rx="5" fill="#D4A017" stroke="#FFD700" stroke-width="1"/>
-    <rect x="20" y="30" width="20" height="30" rx="3" fill="#FFDD88" opacity="0.9"/>
-    <rect x="22" y="35" width="16" height="20" rx="2" fill="#FFAA33" opacity="0.6"/>
-    <rect x="20" y="65" width="20" height="5" fill="#8B6914"/>
-    <rect x="25" y="70" width="10" height="25" fill="#8B6914"/>
-    <circle cx="30" cy="50" r="8" fill="#FFEEAA" opacity="0.8"/>
-</svg>
-
 <div class="container">
     <h1>⚓ ПОРТОВЫЙ БАНК ⚓</h1>
     <div class="sub">учет дублонов</div>
-
     <div id="adminPanel" class="admin-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <span>🔧 Режим администратора</span>
@@ -367,17 +271,12 @@
             </div>
         </div>
     </div>
-
     <div class="tabs">
         <button class="tab-btn active" data-tab="tabUsers">👥 УЧАСТНИКИ</button>
         <button class="tab-btn" data-tab="tabHistory">📜 ИСТОРИЯ</button>
     </div>
-
     <div id="tabUsers" class="tab-content active">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Поиск по имени...">
-        </div>
-
+        <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Поиск по имени..."></div>
         <div id="usersTableContainer" style="overflow-x: auto;">
             <table class="users-table" id="usersTable">
                 <thead>
@@ -386,45 +285,32 @@
                 <tbody id="usersList"></tbody>
             </table>
         </div>
-
         <div id="addUserBlock" style="display:none;">
             <button class="tool-btn" id="addUserBtn" style="margin:15px 0;">➕ ДОБАВИТЬ УЧАСТНИКА</button>
         </div>
-
         <button class="copy-btn" id="copyForChatBtn">📋 СКОПИРОВАТЬ БАЛАНСЫ ДЛЯ БЕСЕДЫ</button>
     </div>
-
     <div id="tabHistory" class="tab-content">
         <div class="history-filters">
-            <select id="historyFilterUser">
-                <option value="">Все участники</option>
-            </select>
+            <select id="historyFilterUser"><option value="">Все участники</option></select>
         </div>
         <div style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
             <table class="history-table">
-                <thead>
-                    <tr><th>Дата</th><th>Участник</th><th>Операция</th><th>Сумма</th><th>Причина</th></tr>
-                </thead>
+                <thead><tr><th>Дата</th><th>Участник</th><th>Операция</th><th>Сумма</th><th>Причина</th></tr></thead>
                 <tbody id="historyListBody"></tbody>
             </table>
         </div>
     </div>
-
     <footer>vk.com/fickbuhta — Портовый банк</footer>
 </div>
-
 <script>
-    // ==================== НАСТРОЙКИ (ВСТАВЬТЕ ВАШ URL) ====================
-    const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynlx0cBGDC2nIqDTOIetSCLd-eOS3bp5VUi8j7VGpcwXztFBA91QMCJHa-4pLaagwKOQ/exec";  // ← СЮДА ВСТАВЬТЕ URL ИЗ APPS SCRIPT
+    // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT В ЭТУ СТРОКУ ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynlx0cBGDC2nIqDTOIetSCLd-eOS3bp5VUi8j7VGpcwXztFBA91QMCJHa-4pLaagwKOQ/exec";
     // ====================================================================
-
-    let users = [];
-    let fullHistory = [];
-    let isAdmin = false;
-    let currentSort = { field: 'balance', order: 'desc' };
+    const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
     
-    // ========== ЗАГРУЗКА ==========
+    let users = [], fullHistory = [], isAdmin = false, currentSort = { field: 'balance', order: 'desc' };
+    
     async function loadData() {
         try {
             const response = await fetch(SCRIPT_URL);
@@ -441,31 +327,16 @@
             return false;
         }
     }
-    
     async function saveUsers() {
         try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ users: users })
-            });
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ users: users }) });
         } catch(e) { console.error('Ошибка сохранения:', e); }
     }
-    
     async function addHistoryEntry(userName, operation, amount, reason) {
-        const historyEntry = { userName, operation, amount, reason };
         try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ historyEntry: historyEntry })
-            });
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ historyEntry: { userName, operation, amount, reason } }) });
         } catch(e) { console.error('Ошибка записи истории:', e); }
     }
-    
-    // ========== ОПЕРАЦИИ ==========
     async function addDublon(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
@@ -473,36 +344,22 @@
         await addHistoryEntry(user.name, "Начисление", amount, reason);
         await saveUsers();
         renderUsers();
-        // Копируем сообщение в буфер
         const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
-        try {
-            await navigator.clipboard.writeText(msg);
-            alert(`✅ Начислено! Сообщение скопировано в буфер.`);
-        } catch(e) {
-            alert(`✅ Начислено! Сообщение: ${msg}`);
-        }
+        try { await navigator.clipboard.writeText(msg); alert(`✅ Начислено! Сообщение скопировано в буфер.`); } catch(e) { alert(`✅ Начислено! Сообщение: ${msg}`); }
     }
-    
     async function subtractDublons(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return false;
-        if (user.balance < amount) {
-            alert(`У ${user.name} недостаточно дублонов! Доступно: ${user.balance}`);
-            return false;
-        }
+        if (user.balance < amount) { alert(`У ${user.name} недостаточно дублонов! Доступно: ${user.balance}`); return false; }
         user.balance -= amount;
         await addHistoryEntry(user.name, "Списание", amount, reason);
         await saveUsers();
         renderUsers();
         return true;
     }
-    
     async function addNewUser(name) {
         if (!name?.trim()) { alert('Введите имя'); return; }
-        if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) {
-            alert('Такой участник уже есть!');
-            return;
-        }
+        if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) { alert('Такой участник уже есть!'); return; }
         const maxId = users.length > 0 ? Math.max(...users.map(u => u.id)) : -1;
         const newUser = { id: maxId + 1, name: name.trim(), balance: 0 };
         users.push(newUser);
@@ -510,7 +367,6 @@
         await saveUsers();
         renderUsers();
     }
-    
     async function deleteUser(userId) {
         const user = users.find(u => u.id === userId);
         if (!user || !confirm(`Удалить ${user.name}?`)) return;
@@ -519,15 +375,12 @@
         await saveUsers();
         renderUsers();
     }
-    
-    // ========== ОТОБРАЖЕНИЕ ==========
     function sortUsers() {
         users.sort((a, b) => {
             if (currentSort.field === 'name') return currentSort.order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             else return currentSort.order === 'asc' ? a.balance - b.balance : b.balance - a.balance;
         });
     }
-    
     function renderUsers() {
         sortUsers();
         const tbody = document.getElementById('usersList');
@@ -557,7 +410,6 @@
         document.getElementById('sortName').innerHTML = currentSort.field === 'name' ? (currentSort.order === 'asc' ? '👤 Участник ▲' : '👤 Участник ▼') : '👤 Участник';
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
-    
     function updateHistoryFilter() {
         const select = document.getElementById('historyFilterUser');
         if (!select) return;
@@ -565,20 +417,13 @@
         select.innerHTML = '<option value="">Все участники</option>';
         uniqueNames.forEach(name => select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`);
     }
-    
     function renderHistory() {
         const tbody = document.getElementById('historyListBody');
         if (!tbody) return;
         const filterUser = document.getElementById('historyFilterUser')?.value;
         let filtered = [...fullHistory];
-        if (filterUser && filterUser !== '') {
-            filtered = filtered.filter(item => item.userName === filterUser);
-        }
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td><tr>';
-            return;
-        }
-        
+        if (filterUser && filterUser !== '') filtered = filtered.filter(item => item.userName === filterUser);
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td><tr>'; return; }
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = filtered.slice(0, 200).map(item => {
             const date = new Date(item.date);
@@ -587,19 +432,11 @@
             if (item.operation === "Начисление") amountStr = `+${item.amount} 🪙`;
             else if (item.operation === "Списание") amountStr = `-${item.amount} 🪙`;
             else amountStr = `${item.amount} 🪙`;
-            return `<tr>
-                        <td>${dateStr}</td>
-                        <td>${escapeHtml(item.userName)}</td>
-                        <td>${escapeHtml(item.operation)}</td>
-                        <td>${amountStr}</td>
-                        <td>${escapeHtml(item.reason || '—')}</td>
-                    </tr>`;
+            return `<tr><td>${dateStr}</td><td>${escapeHtml(item.userName)}</td><td>${escapeHtml(item.operation)}</td><td>${amountStr}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`;
         }).join('');
     }
-    
-    // ========== БЭКАП ==========
     function downloadBackup() {
-        const backup = { users: users, history: fullHistory, exportDate: new Date().toISOString() };
+        const backup = { users, history: fullHistory, exportDate: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
         const link = document.createElement('a');
         link.download = `portbank_backup_${new Date().toISOString().slice(0,19)}.json`;
@@ -608,8 +445,6 @@
         URL.revokeObjectURL(link.href);
         alert('✅ Бэкап сохранён!');
     }
-    
-    // ========== ДИАЛОГИ ==========
     window.promptAdd = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить дублон ${user?.name}?`, "отзыв");
@@ -636,17 +471,13 @@
             if (reason) await subtractDublons(userId, parseInt(amount), reason);
         }
     };
-    
     function copyBalancesToChat() {
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
         [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
-    
     function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
-    
-    // ========== АДМИН-ПАНЕЛЬ ==========
     function showAdminLogin() {
         const modal = document.createElement('div');
         modal.className = 'login-modal';
@@ -666,15 +497,12 @@
         document.getElementById('skipAdminLogin').onclick = () => { modal.remove(); renderUsers(); };
         document.getElementById('adminPasswordInput').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('submitAdminPassword').click(); };
     }
-    
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
     document.getElementById('sortName').onclick = () => { currentSort.field = 'name'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
     document.getElementById('sortBalance').onclick = () => { currentSort.field = 'balance'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
     document.getElementById('addUserBtn').onclick = async () => { const name = prompt("Имя нового участника:"); if (name) await addNewUser(name); };
     document.getElementById('historyFilterUser').addEventListener('change', () => renderHistory());
-    
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -683,11 +511,9 @@
             document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
         });
     });
-    
     window.deleteUser = deleteUser;
     showAdminLogin();
     loadData();
-    
     function createStars() { for (let i = 0; i < 80; i++) { let star = document.createElement('div'); star.classList.add('star'); star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; star.style.animationDelay = Math.random() * 6 + 's'; star.style.animationDuration = Math.random() * 4 + 2 + 's'; document.body.appendChild(star); } }
     createStars();
 </script>
