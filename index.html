@@ -414,21 +414,49 @@
 </div>
 
 <script>
-    // ==================== НАСТРОЙКИ (ВСТАВЬТЕ ВАШ URL) ====================
+    // ==================== НАСТРОЙКИ ====================
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvfLFEmn0ZJkxE3n3xIgxFs4YfspVHAYP_NdezhIxRMDG3RlRMlAbc3hTbsIXWmXMMSw/exec"
-    // ====================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvfLFEmn0ZJkxE3n3xIgxFs4YfspVHAYP_NdezhIxRMDG3RlRMlAbc3hTbsIXWmXMMSw/exec";
+    // ==================================================
 
     let users = [];
     let fullHistory = [];
     let isAdmin = false;
     let currentSort = { field: 'balance', order: 'desc' };
-    
-    // ========== ЗАГРУЗКА ==========
+    let callbackCounter = 0;
+
+    // ========== БЕЗОПАСНОЕ ЭСКЕЙПИРОВАНИЕ ==========
+    function escapeHtml(str) { 
+        if (str === undefined || str === null) return '';
+        str = String(str);
+        return str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); 
+    }
+
+    // ========== JSONP-ЗАПРОСЫ (обход CORS) ==========
+    function jsonpRequest(url) {
+        return new Promise((resolve, reject) => {
+            const callbackName = 'jsonp_callback_' + (++callbackCounter);
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                if (document.body.contains(script)) document.body.removeChild(script);
+                resolve(data);
+            };
+            
+            const script = document.createElement('script');
+            script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+            script.onerror = function() {
+                delete window[callbackName];
+                if (document.body.contains(script)) document.body.removeChild(script);
+                reject(new Error('Ошибка загрузки данных'));
+            };
+            document.body.appendChild(script);
+        });
+    }
+
+    // ========== ЗАГРУЗКА ДАННЫХ ==========
     async function loadData() {
         try {
-            const response = await fetch(SCRIPT_URL);
-            const data = await response.json();
+            const data = await jsonpRequest(SCRIPT_URL);
             if (data.users && Array.isArray(data.users)) users = data.users;
             if (data.history && Array.isArray(data.history)) fullHistory = data.history;
             updateHistoryFilter();
@@ -441,31 +469,38 @@
             return false;
         }
     }
-    
+
+    // ========== СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ==========
     async function saveUsers() {
         try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ users: users })
-            });
-        } catch(e) { console.error('Ошибка сохранения:', e); }
+            const url = SCRIPT_URL + '?action=saveUsers&users=' + encodeURIComponent(JSON.stringify(users));
+            const data = await jsonpRequest(url);
+            if (data.status !== 'ok') {
+                console.warn('Скрипт вернул ошибку:', data);
+            }
+            return data;
+        } catch(e) {
+            console.error('Ошибка сохранения:', e);
+        }
     }
-    
+
+    // ========== ЗАПИСЬ В ИСТОРИЮ ==========
     async function addHistoryEntry(userName, operation, amount, reason) {
-        const historyEntry = { userName, operation, amount, reason };
         try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ historyEntry: historyEntry })
-            });
-        } catch(e) { console.error('Ошибка записи истории:', e); }
+            const url = SCRIPT_URL + '?action=addHistory&userName=' + encodeURIComponent(String(userName)) + 
+                        '&operation=' + encodeURIComponent(operation) + 
+                        '&amount=' + encodeURIComponent(amount) + 
+                        '&reason=' + encodeURIComponent(reason);
+            const data = await jsonpRequest(url);
+            if (data.status !== 'ok') {
+                console.warn('Скрипт вернул ошибку:', data);
+            }
+        } catch(e) { 
+            console.error('Ошибка записи истории:', e); 
+        }
     }
-    
-    // ========== ОПЕРАЦИИ ==========
+
+    // ========== ОПЕРАЦИИ С ДУБЛОНАМИ ==========
     async function addDublon(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
@@ -473,16 +508,11 @@
         await addHistoryEntry(user.name, "Начисление", amount, reason);
         await saveUsers();
         renderUsers();
-        // Копируем сообщение в буфер
         const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
-        try {
-            await navigator.clipboard.writeText(msg);
-            alert(`✅ Начислено! Сообщение скопировано в буфер.`);
-        } catch(e) {
-            alert(`✅ Начислено! Сообщение: ${msg}`);
-        }
+        try { await navigator.clipboard.writeText(msg); alert(`✅ Начислено! Сообщение скопировано в буфер.`); } 
+        catch(e) { alert(`✅ Начислено! Сообщение: ${msg}`); }
     }
-    
+
     async function subtractDublons(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return false;
@@ -496,21 +526,23 @@
         renderUsers();
         return true;
     }
-    
+
+    // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
     async function addNewUser(name) {
         if (!name?.trim()) { alert('Введите имя'); return; }
-        if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) {
+        const trimmedName = name.trim();
+        if (users.some(u => u.name.toLowerCase() === trimmedName.toLowerCase())) {
             alert('Такой участник уже есть!');
             return;
         }
         const maxId = users.length > 0 ? Math.max(...users.map(u => u.id)) : -1;
-        const newUser = { id: maxId + 1, name: name.trim(), balance: 0 };
+        const newUser = { id: maxId + 1, name: trimmedName, balance: 0 };
         users.push(newUser);
-        await addHistoryEntry(name.trim(), "Создание счета", 0, "Новый участник");
+        await addHistoryEntry(trimmedName, "Создание счета", 0, "Новый участник");
         await saveUsers();
         renderUsers();
     }
-    
+
     async function deleteUser(userId) {
         const user = users.find(u => u.id === userId);
         if (!user || !confirm(`Удалить ${user.name}?`)) return;
@@ -519,7 +551,7 @@
         await saveUsers();
         renderUsers();
     }
-    
+
     // ========== ОТОБРАЖЕНИЕ ==========
     function sortUsers() {
         users.sort((a, b) => {
@@ -527,7 +559,7 @@
             else return currentSort.order === 'asc' ? a.balance - b.balance : b.balance - a.balance;
         });
     }
-    
+
     function renderUsers() {
         sortUsers();
         const tbody = document.getElementById('usersList');
@@ -557,25 +589,29 @@
         document.getElementById('sortName').innerHTML = currentSort.field === 'name' ? (currentSort.order === 'asc' ? '👤 Участник ▲' : '👤 Участник ▼') : '👤 Участник';
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
-    
+
     function updateHistoryFilter() {
         const select = document.getElementById('historyFilterUser');
         if (!select) return;
-        const uniqueNames = [...new Set(fullHistory.map(h => h.userName))];
+        const uniqueNames = [...new Set(fullHistory.map(h => String(h.userName)))];
         select.innerHTML = '<option value="">Все участники</option>';
-        uniqueNames.forEach(name => select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`);
+        uniqueNames.forEach(name => {
+            if (name && name.trim()) {
+                select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+            }
+        });
     }
-    
+
     function renderHistory() {
         const tbody = document.getElementById('historyListBody');
         if (!tbody) return;
         const filterUser = document.getElementById('historyFilterUser')?.value;
         let filtered = [...fullHistory];
         if (filterUser && filterUser !== '') {
-            filtered = filtered.filter(item => item.userName === filterUser);
+            filtered = filtered.filter(item => String(item.userName) === filterUser);
         }
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td><tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td></tr>';
             return;
         }
         
@@ -589,14 +625,14 @@
             else amountStr = `${item.amount} 🪙`;
             return `<tr>
                         <td>${dateStr}</td>
-                        <td>${escapeHtml(item.userName)}</td>
+                        <td>${escapeHtml(String(item.userName))}</td>
                         <td>${escapeHtml(item.operation)}</td>
                         <td>${amountStr}</td>
                         <td>${escapeHtml(item.reason || '—')}</td>
                     </tr>`;
         }).join('');
     }
-    
+
     // ========== БЭКАП ==========
     function downloadBackup() {
         const backup = { users: users, history: fullHistory, exportDate: new Date().toISOString() };
@@ -608,7 +644,7 @@
         URL.revokeObjectURL(link.href);
         alert('✅ Бэкап сохранён!');
     }
-    
+
     // ========== ДИАЛОГИ ==========
     window.promptAdd = async (userId) => {
         const user = users.find(u => u.id === userId);
@@ -636,16 +672,14 @@
             if (reason) await subtractDublons(userId, parseInt(amount), reason);
         }
     };
-    
+
     function copyBalancesToChat() {
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
         [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
-    
-    function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
-    
+
     // ========== АДМИН-ПАНЕЛЬ ==========
     function showAdminLogin() {
         const modal = document.createElement('div');
@@ -666,7 +700,7 @@
         document.getElementById('skipAdminLogin').onclick = () => { modal.remove(); renderUsers(); };
         document.getElementById('adminPasswordInput').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('submitAdminPassword').click(); };
     }
-    
+
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
