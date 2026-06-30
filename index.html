@@ -304,14 +304,12 @@
     <footer>vk.com/fickbuhta — Портовый банк</footer>
 </div>
 <script>
-    // ⚠️ ВСТАВЬТЕ НОВЫЙ URL ИЗ APPS SCRIPT ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeYsEmArtxMN4OjDGibhtYrI9AJaHlB_m7zS5xmWOpwXzGTzB54lAWoFXSOU-oVcMsng/exec";
-    // ====================================================================
+    // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT ⚠️
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ4_-s5JyiUo0Lu19REkrI4Tz_Vv6-JiI05SVd5prJC6BT2mLt6ERFWpjYyEXwpjdPTQ/exec";
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
     
     let users = [], fullHistory = [], isAdmin = false, currentSort = { field: 'balance', order: 'desc' };
     
-    // ИСПРАВЛЕННАЯ функция escapeHtml - теперь работает с числами
     function escapeHtml(str) { 
         if (str === undefined || str === null) return '';
         str = String(str);
@@ -334,13 +332,11 @@
             return false;
         }
     }
+    
     async function saveUsers() {
         try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ users: users })
-            });
+            const url = SCRIPT_URL + '?action=saveUsers&users=' + encodeURIComponent(JSON.stringify(users));
+            const response = await fetch(url);
             const result = await response.json();
             if (result.status !== 'ok') {
                 console.warn('Скрипт вернул ошибку:', result);
@@ -350,19 +346,21 @@
             console.error('Ошибка сохранения:', e);
         }
     }
+    
     async function addHistoryEntry(userName, operation, amount, reason) {
         try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ historyEntry: { userName, operation, amount, reason } })
-            });
+            const url = SCRIPT_URL + '?action=addHistory&userName=' + encodeURIComponent(userName) + 
+                        '&operation=' + encodeURIComponent(operation) + 
+                        '&amount=' + encodeURIComponent(amount) + 
+                        '&reason=' + encodeURIComponent(reason);
+            const response = await fetch(url);
             const result = await response.json();
             if (result.status !== 'ok') {
                 console.warn('Скрипт вернул ошибку:', result);
             }
         } catch(e) { console.error('Ошибка записи истории:', e); }
     }
+    
     async function addDublon(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
@@ -373,6 +371,7 @@
         const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
         try { await navigator.clipboard.writeText(msg); alert(`✅ Начислено! Сообщение скопировано в буфер.`); } catch(e) { alert(`✅ Начислено! Сообщение: ${msg}`); }
     }
+    
     async function subtractDublons(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return false;
@@ -383,6 +382,7 @@
         renderUsers();
         return true;
     }
+    
     async function addNewUser(name) {
         if (!name?.trim()) { alert('Введите имя'); return; }
         if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) { alert('Такой участник уже есть!'); return; }
@@ -393,6 +393,7 @@
         await saveUsers();
         renderUsers();
     }
+    
     async function deleteUser(userId) {
         const user = users.find(u => u.id === userId);
         if (!user || !confirm(`Удалить ${user.name}?`)) return;
@@ -401,12 +402,14 @@
         await saveUsers();
         renderUsers();
     }
+    
     function sortUsers() {
         users.sort((a, b) => {
             if (currentSort.field === 'name') return currentSort.order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             else return currentSort.order === 'asc' ? a.balance - b.balance : b.balance - a.balance;
         });
     }
+    
     function renderUsers() {
         sortUsers();
         const tbody = document.getElementById('usersList');
@@ -437,7 +440,6 @@
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
     
-    // ИСПРАВЛЕННАЯ функция - теперь обрабатывает числа
     function updateHistoryFilter() {
         const select = document.getElementById('historyFilterUser');
         if (!select) return;
@@ -450,7 +452,6 @@
         });
     }
     
-    // ИСПРАВЛЕННАЯ функция - теперь обрабатывает числа
     function renderHistory() {
         const tbody = document.getElementById('historyListBody');
         if (!tbody) return;
@@ -480,16 +481,19 @@
         URL.revokeObjectURL(link.href);
         alert('✅ Бэкап сохранён!');
     }
+    
     window.promptAdd = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить дублон ${user?.name}?`, "отзыв");
         if (reason) await addDublon(userId, 1, reason);
     };
+    
     window.promptAdd5 = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить 5 дублонов ${user?.name}?`, "Активный участник месяца");
         if (reason) await addDublon(userId, 5, reason);
     };
+    
     window.promptAddCustom = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов начислить ${user?.name}?`, "1");
@@ -498,6 +502,7 @@
             if (reason) await addDublon(userId, parseInt(amount), reason);
         }
     };
+    
     window.promptSubtract = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов списать у ${user?.name}? (Доступно: ${user?.balance})`, "1");
@@ -506,17 +511,20 @@
             if (reason) await subtractDublons(userId, parseInt(amount), reason);
         }
     };
+    
     function copyBalancesToChat() {
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
         [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
+    
     function showAdminLogin() {
         const modal = document.createElement('div');
         modal.className = 'login-modal';
         modal.innerHTML = `<div class="login-box"><h3>⚓ ПОРТОВЫЙ БАНК ⚓</h3><p style="color:#bdd4ff;">Введите пароль для управления</p><input type="password" id="adminPasswordInput" placeholder="Пароль"><button class="login-btn" id="submitAdminPassword">Войти как админ</button><button class="skip-btn" id="skipAdminLogin">Просмотр без пароля</button><div id="adminLoginError" class="error-msg"></div></div>`;
         document.body.appendChild(modal);
+        
         document.getElementById('submitAdminPassword').onclick = () => {
             if (document.getElementById('adminPasswordInput').value === ADMIN_PASSWORD) {
                 isAdmin = true;
@@ -526,17 +534,30 @@
                 document.getElementById('backupBtn').onclick = downloadBackup;
                 document.getElementById('logoutBtn').onclick = () => { isAdmin = false; location.reload(); };
                 renderUsers();
-            } else document.getElementById('adminLoginError').innerText = 'Неверный пароль';
+            } else {
+                document.getElementById('adminLoginError').innerText = 'Неверный пароль';
+            }
         };
-        document.getElementById('skipAdminLogin').onclick = () => { modal.remove(); renderUsers(); };
-        document.getElementById('adminPasswordInput').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('submitAdminPassword').click(); };
+        
+        document.getElementById('skipAdminLogin').onclick = () => {
+            modal.remove();
+            renderUsers();
+        };
+        
+        document.getElementById('adminPasswordInput').onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('submitAdminPassword').click();
+            }
+        };
     }
+    
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
     document.getElementById('sortName').onclick = () => { currentSort.field = 'name'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
     document.getElementById('sortBalance').onclick = () => { currentSort.field = 'balance'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
     document.getElementById('addUserBtn').onclick = async () => { const name = prompt("Имя нового участника:"); if (name) await addNewUser(name); };
     document.getElementById('historyFilterUser').addEventListener('change', () => renderHistory());
+    
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -545,10 +566,23 @@
             document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
         });
     });
+    
     window.deleteUser = deleteUser;
+    
     showAdminLogin();
     loadData();
-    function createStars() { for (let i = 0; i < 80; i++) { let star = document.createElement('div'); star.classList.add('star'); star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; star.style.animationDelay = Math.random() * 6 + 's'; star.style.animationDuration = Math.random() * 4 + 2 + 's'; document.body.appendChild(star); } }
+    
+    function createStars() {
+        for (let i = 0; i < 80; i++) {
+            let star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 6 + 's';
+            star.style.animationDuration = Math.random() * 4 + 2 + 's';
+            document.body.appendChild(star);
+        }
+    }
     createStars();
 </script>
 </body>
