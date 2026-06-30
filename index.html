@@ -329,12 +329,31 @@
     }
     async function saveUsers() {
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ users: users }) });
-        } catch(e) { console.error('Ошибка сохранения:', e); }
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ users: users })
+            });
+            const result = await response.json();
+            if (result.status !== 'ok') {
+                console.warn('Скрипт вернул ошибку:', result);
+            }
+            return result;
+        } catch(e) {
+            console.error('Ошибка сохранения:', e);
+        }
     }
     async function addHistoryEntry(userName, operation, amount, reason) {
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ historyEntry: { userName, operation, amount, reason } }) });
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ historyEntry: { userName, operation, amount, reason } })
+            });
+            const result = await response.json();
+            if (result.status !== 'ok') {
+                console.warn('Скрипт вернул ошибку:', result);
+            }
         } catch(e) { console.error('Ошибка записи истории:', e); }
     }
     async function addDublon(userId, amount, reason) {
