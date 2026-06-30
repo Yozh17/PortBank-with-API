@@ -305,7 +305,7 @@
 </div>
 <script>
     // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT В ЭТУ СТРОКУ ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMCeQTCJ9J23xPeaI1CeeoEuN4onspJNII1wkGOoZnaaud1O8Jmzm2mr_Km82c_9f1AQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTCUbAbGQ5wKUFhwjRtisTlxCp-tmyEBA9AiScPrBnJarKvBO6XRvW3w-PiIRle7IAMQ/exec";
     // ====================================================================
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
     
@@ -497,11 +497,13 @@
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
     function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
+    
     function showAdminLogin() {
         const modal = document.createElement('div');
         modal.className = 'login-modal';
         modal.innerHTML = `<div class="login-box"><h3>⚓ ПОРТОВЫЙ БАНК ⚓</h3><p style="color:#bdd4ff;">Введите пароль для управления</p><input type="password" id="adminPasswordInput" placeholder="Пароль"><button class="login-btn" id="submitAdminPassword">Войти как админ</button><button class="skip-btn" id="skipAdminLogin">Просмотр без пароля</button><div id="adminLoginError" class="error-msg"></div></div>`;
         document.body.appendChild(modal);
+        
         document.getElementById('submitAdminPassword').onclick = () => {
             if (document.getElementById('adminPasswordInput').value === ADMIN_PASSWORD) {
                 isAdmin = true;
@@ -510,12 +512,24 @@
                 document.getElementById('addUserBlock').style.display = 'block';
                 document.getElementById('backupBtn').onclick = downloadBackup;
                 document.getElementById('logoutBtn').onclick = () => { isAdmin = false; location.reload(); };
-                renderUsers();
-            } else document.getElementById('adminLoginError').innerText = 'Неверный пароль';
+                loadData();
+            } else {
+                document.getElementById('adminLoginError').innerText = 'Неверный пароль';
+            }
         };
-        document.getElementById('skipAdminLogin').onclick = () => { modal.remove(); renderUsers(); };
-        document.getElementById('adminPasswordInput').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('submitAdminPassword').click(); };
+        
+        document.getElementById('skipAdminLogin').onclick = () => {
+            modal.remove();
+            loadData();
+        };
+        
+        document.getElementById('adminPasswordInput').onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('submitAdminPassword').click();
+            }
+        };
     }
+    
     document.getElementById('searchInput').addEventListener('input', () => renderUsers());
     document.getElementById('copyForChatBtn').addEventListener('click', copyBalancesToChat);
     document.getElementById('sortName').onclick = () => { currentSort.field = 'name'; currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'; renderUsers(); };
@@ -531,8 +545,9 @@
         });
     });
     window.deleteUser = deleteUser;
+    
     showAdminLogin();
-    loadData();
+    
     function createStars() { for (let i = 0; i < 80; i++) { let star = document.createElement('div'); star.classList.add('star'); star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; star.style.animationDelay = Math.random() * 6 + 's'; star.style.animationDuration = Math.random() * 4 + 2 + 's'; document.body.appendChild(star); } }
     createStars();
 </script>
