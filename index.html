@@ -304,9 +304,7 @@
     <footer>vk.com/fickbuhta — Портовый банк</footer>
 </div>
 <script>
-    // ⚠️ ВСТАВЬТЕ ВАШ URL ИЗ APPS SCRIPT В ЭТУ СТРОКУ ⚠️
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTCUbAbGQ5wKUFhwjRtisTlxCp-tmyEBA9AiScPrBnJarKvBO6XRvW3w-PiIRle7IAMQ/exec";
-    // ====================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXdBxDGKGRw4n8qlM-WcUJlQsOZCSe4z-6GYdzH-rGnVszqqJAYYSTKEYcRcEKeqi3yw/exec";
     const ADMIN_PASSWORD = "Fcnjyvfhnby2021";
     
     let users = [], fullHistory = [], isAdmin = false, currentSort = { field: 'balance', order: 'desc' };
@@ -327,6 +325,25 @@
             return false;
         }
     }
+    
+    function escapeHtml(str) { 
+        if (str === undefined || str === null) return '';
+        str = String(str);
+        return str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')); 
+    }
+    
+    function updateHistoryFilter() {
+        const select = document.getElementById('historyFilterUser');
+        if (!select) return;
+        const uniqueNames = [...new Set(fullHistory.map(h => String(h.userName)))];
+        select.innerHTML = '<option value="">Все участники</option>';
+        uniqueNames.forEach(name => {
+            if (name && name.trim()) {
+                select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+            }
+        });
+    }
+    
     async function saveUsers() {
         try {
             const response = await fetch(SCRIPT_URL, {
@@ -343,6 +360,7 @@
             console.error('Ошибка сохранения:', e);
         }
     }
+    
     async function addHistoryEntry(userName, operation, amount, reason) {
         try {
             const response = await fetch(SCRIPT_URL, {
@@ -356,6 +374,7 @@
             }
         } catch(e) { console.error('Ошибка записи истории:', e); }
     }
+    
     async function addDublon(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
@@ -366,6 +385,7 @@
         const msg = `${user.name}, начислен ${amount}🪙 (${reason})\nИтого на счете: ${user.balance}🪙`;
         try { await navigator.clipboard.writeText(msg); alert(`✅ Начислено! Сообщение скопировано в буфер.`); } catch(e) { alert(`✅ Начислено! Сообщение: ${msg}`); }
     }
+    
     async function subtractDublons(userId, amount, reason) {
         const user = users.find(u => u.id === userId);
         if (!user) return false;
@@ -376,6 +396,7 @@
         renderUsers();
         return true;
     }
+    
     async function addNewUser(name) {
         if (!name?.trim()) { alert('Введите имя'); return; }
         if (users.some(u => u.name.toLowerCase() === name.trim().toLowerCase())) { alert('Такой участник уже есть!'); return; }
@@ -386,6 +407,7 @@
         await saveUsers();
         renderUsers();
     }
+    
     async function deleteUser(userId) {
         const user = users.find(u => u.id === userId);
         if (!user || !confirm(`Удалить ${user.name}?`)) return;
@@ -394,12 +416,14 @@
         await saveUsers();
         renderUsers();
     }
+    
     function sortUsers() {
         users.sort((a, b) => {
             if (currentSort.field === 'name') return currentSort.order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             else return currentSort.order === 'asc' ? a.balance - b.balance : b.balance - a.balance;
         });
     }
+    
     function renderUsers() {
         sortUsers();
         const tbody = document.getElementById('usersList');
@@ -429,19 +453,13 @@
         document.getElementById('sortName').innerHTML = currentSort.field === 'name' ? (currentSort.order === 'asc' ? '👤 Участник ▲' : '👤 Участник ▼') : '👤 Участник';
         document.getElementById('sortBalance').innerHTML = currentSort.field === 'balance' ? (currentSort.order === 'asc' ? '🪙 Дублоны ▲' : '🪙 Дублоны ▼') : '🪙 Дублоны';
     }
-    function updateHistoryFilter() {
-        const select = document.getElementById('historyFilterUser');
-        if (!select) return;
-        const uniqueNames = [...new Set(fullHistory.map(h => h.userName))];
-        select.innerHTML = '<option value="">Все участники</option>';
-        uniqueNames.forEach(name => select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`);
-    }
+    
     function renderHistory() {
         const tbody = document.getElementById('historyListBody');
         if (!tbody) return;
         const filterUser = document.getElementById('historyFilterUser')?.value;
         let filtered = [...fullHistory];
-        if (filterUser && filterUser !== '') filtered = filtered.filter(item => item.userName === filterUser);
+        if (filterUser && filterUser !== '') filtered = filtered.filter(item => String(item.userName) === filterUser);
         if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">История пуста</td><tr>'; return; }
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = filtered.slice(0, 200).map(item => {
@@ -451,9 +469,10 @@
             if (item.operation === "Начисление") amountStr = `+${item.amount} 🪙`;
             else if (item.operation === "Списание") amountStr = `-${item.amount} 🪙`;
             else amountStr = `${item.amount} 🪙`;
-            return `<tr><td>${dateStr}</td><td>${escapeHtml(item.userName)}</td><td>${escapeHtml(item.operation)}</td><td>${amountStr}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`;
+            return `<tr><td>${dateStr}</td><td>${escapeHtml(String(item.userName))}</td><td>${escapeHtml(item.operation)}</td><td>${amountStr}</td><td>${escapeHtml(item.reason || '—')}</td></tr>`;
         }).join('');
     }
+    
     function downloadBackup() {
         const backup = { users, history: fullHistory, exportDate: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
@@ -464,16 +483,19 @@
         URL.revokeObjectURL(link.href);
         alert('✅ Бэкап сохранён!');
     }
+    
     window.promptAdd = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить дублон ${user?.name}?`, "отзыв");
         if (reason) await addDublon(userId, 1, reason);
     };
+    
     window.promptAdd5 = async (userId) => {
         const user = users.find(u => u.id === userId);
         const reason = prompt(`За что начислить 5 дублонов ${user?.name}?`, "Активный участник месяца");
         if (reason) await addDublon(userId, 5, reason);
     };
+    
     window.promptAddCustom = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов начислить ${user?.name}?`, "1");
@@ -482,6 +504,7 @@
             if (reason) await addDublon(userId, parseInt(amount), reason);
         }
     };
+    
     window.promptSubtract = async (userId) => {
         const user = users.find(u => u.id === userId);
         const amount = prompt(`Сколько дублонов списать у ${user?.name}? (Доступно: ${user?.balance})`, "1");
@@ -490,13 +513,13 @@
             if (reason) await subtractDublons(userId, parseInt(amount), reason);
         }
     };
+    
     function copyBalancesToChat() {
         let text = "⚓ ПОРТОВЫЙ БАНК ФИКБУХТЫ ⚓\n\n";
         [...users].sort((a,b) => b.balance - a.balance).forEach(user => text += `${user.name} — ${user.balance} 🪙\n`);
         text += `\n📅 ${new Date().toLocaleDateString()}\n#Фикбухта #ПортовыйБанк`;
         navigator.clipboard.writeText(text).then(() => alert('✅ Балансы скопированы!')).catch(() => alert('❌ Не удалось скопировать'));
     }
-    function escapeHtml(str) { return str ? str.replace(/[&<>]/g, (m) => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;')) : ''; }
     
     function showAdminLogin() {
         const modal = document.createElement('div');
